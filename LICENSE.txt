@@ -1,0 +1,5 @@
+・DXライブラリ
+DX Library Copyright (C) 2001-2019 Takumi Yamada.
+
+・ManagedDXL
+Copyright (C) 2024 EFU0508
