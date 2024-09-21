@@ -1,22 +1,26 @@
-﻿Imports System.Drawing
-Imports System.Threading
+﻿Imports System.Threading
 Imports DX
-Imports SampleVB.Program
 
 
 Module Program
     Structure effect
         Public alpha As Single
-        Public Position As VECTOR
         Public Size As Single
+        Public Position As VECTOR
     End Structure
 
     Sub Main()
         SetOutApplicationLogValidFlag(DX.FALSE)               ' log
-        SetMainWindowText("ManagedDXL for VB.net")              ' タイトル
+        SetMainWindowText("ManagedDxLib for VB.net")              ' タイトル
         ChangeWindowMode(DX.TRUE)                     ' 窓表示
         SetUseDirect3DVersion(DX_DIRECT3D_11)              ' directX ver
         SetGraphMode(1280, 720, 16)
+
+        Dim ret As Integer = DxLib_Init()
+        If ret < 0 Then
+            Throw New Exception("DxLib_Init Error")
+        End If
+
         SetUseDirectInputFlag(DX.TRUE)                        ' DirectInput使用
         SetDirectInputMouseMode(DX.FALSE)                     ' DirectInputマウス使用
         SetWindowSizeChangeEnableFlag(DX.FALSE, DX.TRUE)         ' ウインドウサイズを手動変更不可、ウインドウサイズに合わせて拡大
@@ -28,10 +32,6 @@ Module Program
         SetAlwaysRunFlag(DX.TRUE)                             '  非アクティブでも動作
         SetUseDXArchiveFlag(DX.TRUE)                          '  dxaファイルをフォルダとする 
         SetWindowUserCloseEnableFlag(DX.FALSE)                '  ×で勝手Windowを閉じないようにする
-        Dim ret As Integer = DxLib_Init()
-        If ret < 0 Then
-            Throw New Exception("DxLib_Init Error")
-        End If
         SetDrawScreen(DX_SCREEN_BACK)                      '  描画先を裏画面にセット 
         MV1SetLoadModelUsePhysicsMode(DX_LOADMODEL_PHYSICS_LOADCALC)
         MV1SetLoadModelPhysicsWorldGravity(-9.8F)
@@ -47,8 +47,6 @@ Module Program
 
         ''Zバッファの書き込みを有効にする
         SetWriteZBuffer3D(DX.TRUE)
-
-        Dim PHandle As Integer = LoadGraph("Dead.png")
 
         Dim pos As VECTOR = VGet(0, 0, 0)
 
@@ -98,10 +96,11 @@ Module Program
         inseki.Clear()
 
         '' 爆発
+        Dim PHandle As Integer = LoadGraph("Dead.png")
         Dim Bomb As New List(Of effect)()
         Bomb.Clear()
 
-        Do While Not (ProcessMessage() = DX.TRUE) And Not (ClearDrawScreen() = DX.TRUE) And Not (CheckHitKey(KEY_INPUT_ESCAPE) = DX.TRUE)
+        Do While ((ProcessMessage() = 0) And (ClearDrawScreen() = 0) And (CheckHitKey(KEY_INPUT_ESCAPE) <> DX.TRUE))
             ' fps
             If mCount = 0 Then ' 1フレーム目なら時刻を記憶
                 mStartTime = GetNowCount()
@@ -220,9 +219,6 @@ Module Program
                 End If
             Loop
 
-            ' 画面のクリア
-            ClearDrawScreen()
-
             SetBackgroundColor(160, 216, 239)
             DrawString(0, 0, mFps.ToString(), GetColor(255, 255, 255))
 
@@ -267,16 +263,15 @@ Module Program
             SetDrawBright(255, 255, 255)    ' DrawBillboard3Dの色
             SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255)
 
+            ' fps
+            Dim tookTime As Integer = GetNowCount() - mStartTime ' かかった時間
+            Dim waitTime As Integer = mCount * 1000 / FPS - tookTime ' 待つべき時間
+            If waitTime > 0 Then
+                Thread.Sleep(waitTime) ' 待機
+            End If
 
             ' 裏画面の内容を表画面に反映させる
             ScreenFlip()
-
-                ' fps
-                Dim tookTime As Integer = GetNowCount() - mStartTime ' かかった時間
-                Dim waitTime As Integer = mCount * 1000 / FPS - tookTime ' 待つべき時間
-                If waitTime > 0 Then
-                    Thread.Sleep(waitTime) ' 待機
-                End If
         Loop
 
 

@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using static DX;
 
 namespace Sample
@@ -14,8 +10,8 @@ namespace Sample
         struct effect
         {
             public float Alpha;
-            public VECTOR Position;
             public float Size;
+            public VECTOR Position;
         }
 
         /// <summary>
@@ -25,10 +21,17 @@ namespace Sample
         static void Main()
         {
             SetOutApplicationLogValidFlag(FALSE);               /*log*/
-            SetMainWindowText("ManagedDXL for C#");              /*タイトル*/
+            SetMainWindowText("ManagedDxLib for C#");              /*タイトル*/
             ChangeWindowMode(TRUE);                     /*窓表示*/
             SetUseDirect3DVersion(DX_DIRECT3D_11);              /*directX ver*/
             SetGraphMode(1280, 720, 16);
+
+            int ret = DxLib_Init();
+            if (ret < 0)
+            {
+                throw new Exception("DxLib_Init Error");
+            }
+
             SetUseDirectInputFlag(TRUE);                        /*DirectInput使用*/
             SetDirectInputMouseMode(FALSE);                     /*DirectInputマウス使用*/
             SetWindowSizeChangeEnableFlag(FALSE, TRUE);         /*ウインドウサイズを手動変更不可、ウインドウサイズに合わせて拡大*/
@@ -40,11 +43,6 @@ namespace Sample
             SetAlwaysRunFlag(TRUE);                             /* 非アクティブでも動作*/
             SetUseDXArchiveFlag(TRUE);                          /* dxaファイルをフォルダとする */
             SetWindowUserCloseEnableFlag(FALSE);                /* ×で勝手Windowを閉じないようにする*/
-            int ret = DxLib_Init();
-            if (ret < 0)
-            {
-                throw new Exception("DxLib_Init Error");
-            }
             SetDrawScreen(DX_SCREEN_BACK);                      /* 描画先を裏画面にセット */
             MV1SetLoadModelUsePhysicsMode(DX_LOADMODEL_PHYSICS_LOADCALC);
             MV1SetLoadModelPhysicsWorldGravity(-9.8f);
@@ -60,8 +58,6 @@ namespace Sample
 
             //Zバッファの書き込みを有効にする
             SetWriteZBuffer3D(TRUE);
-
-            int PHandle = LoadGraph("Dead.png");
 
             VECTOR pos = VGet(0, 0, 0);
 
@@ -111,10 +107,11 @@ namespace Sample
             inseki.Clear();
 
             // 爆発
+            int PHandle = LoadGraph("Dead.png");
             List<effect> Bomb = new List<effect>();
-            Bomb.Clear(); 
+            Bomb.Clear();
 
-            while (!(ProcessMessage() == TRUE)  && !(ClearDrawScreen() == TRUE) && !(CheckHitKey(KEY_INPUT_ESCAPE) == TRUE))
+            while ((ProcessMessage() == 0) && (ClearDrawScreen() == 0) && (CheckHitKey(KEY_INPUT_ESCAPE) != TRUE))
             {
                 // fps
                 if (mCount == 0)
@@ -273,10 +270,8 @@ namespace Sample
                     }
                 }
 
-                // 画面のクリア
-                ClearDrawScreen();
-
                 SetBackgroundColor(160, 216, 239);
+
                 DrawString(0, 0, mFps.ToString(), GetColor(255, 255, 255));
 
                 // 本体表示
@@ -323,9 +318,6 @@ namespace Sample
                 SetDrawBright(255, 255, 255); // DrawBillboard3Dの色
                 SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 
-                // 裏画面の内容を表画面に反映させる
-                ScreenFlip();
-
                 // fps
                 int tookTime = GetNowCount() - mStartTime;  //かかった時間
                 int waitTime = mCount * 1000 / FPS - tookTime;  //待つべき時間
@@ -333,8 +325,10 @@ namespace Sample
                 {
                     Thread.Sleep(waitTime);  //待機
                 }
-            }
 
+                // 裏画面の内容を表画面に反映させる
+                ScreenFlip();
+            }
 
             DxLib_End();				// ＤＸライブラリ使用の終了処理
         }
